@@ -12,7 +12,7 @@ func TestWait(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 	run := `trap "echo intr; exit 0" SIGINT SIGTERM; echo running sleep 1; exit 0`
-	c := NewStopper(exec.Command("bash", "-c", run))
+	c := New(exec.Command("bash", "-c", run))
 	c.Start()
 	c.Wait(ctx)
 	if !c.Cmd.ProcessState.Success() {
@@ -24,7 +24,7 @@ func TestWait_Kill(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*1)
 	defer cancel()
 	run := `trap "echo ignoring" SIGINT; while true; do echo running; sleep 1; done`
-	c := NewStopper(exec.Command("bash", "-c", run))
+	c := New(exec.Command("bash", "-c", run))
 	c.Start()
 	c.Wait(ctx)
 	if !c.stopped() {
@@ -34,7 +34,7 @@ func TestWait_Kill(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	run := `trap "echo intr; exit 0" SIGINT SIGTERM; while true; do echo running; sleep 1; done`
-	c := NewStopper(exec.Command("bash", "-c", run))
+	c := New(exec.Command("bash", "-c", run))
 	c.Start()
 	time.Sleep(time.Second)
 	c.Stop(context.Background())

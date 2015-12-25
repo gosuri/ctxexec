@@ -12,17 +12,18 @@ import (
 // StopFunc is the function that terminates a command
 type StopFunc func(ctx context.Context, cmd *exec.Cmd) error
 
-// Stopper wrapps the *exec.Cmd with a StopFunc
+// CtxCmd wrapps the *exec.Cmd with a StopFunc
+//
 // It provides context-aware graceful termination helper functions.
-type Stopper struct {
+type CtxCmd struct {
 	// StopFunc is the function to call when stopping the command
 	StopFunc
 	*exec.Cmd // Cmd represents an external command being prepared or run
 }
 
-// NewStopper returns a new Stopper for the *exec.Cmd with a default StopFunc
-func NewStopper(cmd *exec.Cmd) *Stopper {
-	return &Stopper{Cmd: cmd, StopFunc: stopFunc}
+// New returns a new CtxCmd for the *exec.Cmd with a default StopFunc
+func New(cmd *exec.Cmd) *CtxCmd {
+	return &CtxCmd{Cmd: cmd, StopFunc: stopFunc}
 }
 
 // Run starts the specified command and waits for it to complete.
@@ -35,10 +36,10 @@ func NewStopper(cmd *exec.Cmd) *Stopper {
 // error is of type *exec.ExitError, context.DeadlineExceeded,
 // context.Canceled. Other error types may be returned for I/O problems.
 func Run(ctx context.Context, cmd *exec.Cmd) error {
-	return NewStopper(cmd).Run(ctx)
+	return New(cmd).Run(ctx)
 }
 
-// Stop terminates commmand execution using a new Stopper
+// Stop terminates commmand execution using a new CtxCmd
 //
 // The returned error is nil if the command stopped before
 // the context was cancelled
@@ -46,7 +47,7 @@ func Run(ctx context.Context, cmd *exec.Cmd) error {
 // It gracefully waits for the command to finish termination
 // before killing the process when the context is cancelled
 func Stop(ctx context.Context, cmd *exec.Cmd) error {
-	return NewStopper(cmd).Run(ctx)
+	return New(cmd).Run(ctx)
 }
 
 // Wait waits for the command to exit.
@@ -66,7 +67,7 @@ func Stop(ctx context.Context, cmd *exec.Cmd) error {
 //
 // Wait releases any resources associated with the Cmd.
 func Wait(ctx context.Context, cmd *exec.Cmd) error {
-	return NewStopper(cmd).Wait(ctx)
+	return New(cmd).Wait(ctx)
 }
 
 // Start starts the specified command but does not wait for it to complete.
@@ -74,7 +75,7 @@ func Wait(ctx context.Context, cmd *exec.Cmd) error {
 // The Wait method will return the exit code and release associated resources
 // once the command exits.
 func Start(cmd *exec.Cmd) error {
-	return NewStopper(cmd).Start()
+	return New(cmd).Start()
 }
 
 // Run starts the specified command and waits for it to complete.
@@ -86,7 +87,7 @@ func Start(cmd *exec.Cmd) error {
 // If the command fails to run or doesn't complete successfully, the
 // error is of type *exec.ExitError, context.DeadlineExceeded,
 // context.Canceled. Other error types may be returned for I/O problems.
-func (c *Stopper) Run(ctx context.Context) error {
+func (c *CtxCmd) Run(ctx context.Context) error {
 	if err := c.Start(); err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func (c *Stopper) Run(ctx context.Context) error {
 //
 // The Wait method will return the exit code and release associated resources
 // once the command exits.
-func (c *Stopper) Start() error {
+func (c *CtxCmd) Start() error {
 	return c.Cmd.Start()
 }
 
@@ -108,7 +109,7 @@ func (c *Stopper) Start() error {
 //
 // It gracefully waits for the command to finish execution before killing
 // it after a timeout.
-func (c *Stopper) Stop(ctx context.Context) error {
+func (c *CtxCmd) Stop(ctx context.Context) error {
 	return c.StopFunc(ctx, c.Cmd)
 }
 
@@ -146,7 +147,7 @@ func stopFunc(ctx context.Context, cmd *exec.Cmd) error {
 // to complete.
 //
 // Wait releases any resources associated with the Cmd.
-func (c *Stopper) Wait(ctx context.Context) error {
+func (c *CtxCmd) Wait(ctx context.Context) error {
 	<-ctx.Done()
 	c.Stop(ctx)
 	if err := c.Cmd.Wait(); err != nil { // wait for the process to be killed
@@ -156,6 +157,6 @@ func (c *Stopper) Wait(ctx context.Context) error {
 }
 
 // stopped returns true if the process stopped and created a process state
-func (c *Stopper) stopped() bool {
+func (c *CtxCmd) stopped() bool {
 	return c.Cmd.ProcessState != nil // ProcessState is created only after the process stop running
 }
