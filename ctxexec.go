@@ -49,6 +49,34 @@ func Stop(ctx context.Context, cmd *exec.Cmd) error {
 	return NewStopper(cmd).Run(ctx)
 }
 
+// Wait waits for the command to exit.
+// It must have been started by Start.
+//
+// The returned error is nil if the command runs, has no problems
+// copying stdin, stdout, and stderr, and exits with a zero exit
+// status.
+//
+// If the command fails to run or doesn't complete successfully, the
+// error is of type *ExitError. Other error types may be
+// returned for I/O problems.
+//
+// If c.Stdin is not an *os.File, Wait also waits for the I/O loop
+// copying from c.Stdin into the process's standard input
+// to complete.
+//
+// Wait releases any resources associated with the Cmd.
+func Wait(ctx context.Context, cmd *exec.Cmd) error {
+	return NewStopper(cmd).Wait(ctx)
+}
+
+// Start starts the specified command but does not wait for it to complete.
+//
+// The Wait method will return the exit code and release associated resources
+// once the command exits.
+func Start(cmd *exec.Cmd) error {
+	return NewStopper(cmd).Start()
+}
+
 // Run starts the specified command and waits for it to complete.
 //
 // The returned error is nil if the command runs, has no problems
