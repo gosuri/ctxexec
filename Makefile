@@ -1,4 +1,4 @@
 test:
-	@go test -parallel=3 -race .
+	@go test -v -parallel=3 -race .
 
 .PHONY: test
