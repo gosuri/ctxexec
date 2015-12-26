@@ -12,9 +12,9 @@ import (
 func ExampleRun() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2) // kill after 2 secs
 	defer cancel()                                                          // cancel when command main exits
-	cmd := exec.Command("bash", "-c", `while true; sleep 1; done`)          // run forever
+	cmd := exec.Command("sh", "-c", `while true; sleep 1; done`)            // run forever
 	if err := ctxexec.Run(ctx, cmd); err != nil {
-		fmt.Println(err)
+		fmt.Printf("%T", err)
 	}
-	// Output: exit status 2
+	// Output: *exec.ExitError
 }
