@@ -43,3 +43,13 @@ func TestStop(t *testing.T) {
 		t.Fatalf("process failed to exit successfully. %+v", c.Cmd.ProcessState)
 	}
 }
+
+func TestStop_NoStart(t *testing.T) {
+	run := `trap "echo intr; exit 0" SIGINT SIGTERM; while true; do echo running; sleep 1; done`
+	c := New(exec.Command("bash", "-c", run))
+	c.Stop(context.Background())
+	c.Cmd.Wait()
+	if c.Cmd.ProcessState != nil {
+		t.Fatalf("process failed to exit successfully. %+v", c.Cmd.ProcessState)
+	}
+}

@@ -115,6 +115,10 @@ func (c *CtxCmd) Stop(ctx context.Context) error {
 
 // stopFunc is the default function used for terminating the command exectution
 func stopFunc(ctx context.Context, cmd *exec.Cmd) error {
+	// return if the process hasn't started
+	if cmd == nil || cmd.Process == nil {
+		return nil
+	}
 	// try graceful termination first
 	cmd.Process.Signal(os.Interrupt)
 	cmd.Process.Signal(syscall.SIGTERM)
